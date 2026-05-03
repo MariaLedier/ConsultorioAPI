@@ -1,9 +1,9 @@
-# 🏥 Sistema de Agendamento de Consultas
+# Sistema de Agendamento de Consultas
 ### ASP.NET Core + PostgreSQL — Estratégia SQL First
 
 ---
 
-## 📋 Visão Geral
+## Visão Geral
 
 API REST para controle de agenda médica, com toda a lógica de negócio no banco de dados (SQL First).
 
@@ -16,7 +16,7 @@ API REST para controle de agenda médica, com toda a lógica de negócio no banc
 
 ---
 
-## 🗂️ Estrutura de Pastas
+## Estrutura de Pastas
 
 ```
 ConsultorioAPI/
@@ -43,7 +43,7 @@ ConsultorioAPI/
 
 ---
 
-## 🚀 Passo a Passo para Rodar
+## Passo a Passo para Rodar
 
 ### Passo 1 — PostgreSQL
 
@@ -85,7 +85,7 @@ dotnet add package Swashbuckle.AspNetCore
 
 ---
 
-## 🔗 Endpoints da API
+## Endpoints da API
 
 ### Médicos
 
@@ -118,7 +118,7 @@ dotnet add package Swashbuckle.AspNetCore
 
 ---
 
-## 🧪 Roteiro de Testes no Swagger (Dia 4)
+## Roteiro de Testes no Swagger (Dia 4)
 
 ### Teste 1 — Agendar com sucesso
 ```json
@@ -175,7 +175,7 @@ GET /api/consultas/medico/1/estatisticas
 
 ---
 
-## 💡 Como a Estratégia SQL First Funciona Aqui
+## Como a Estratégia SQL First Funciona Aqui
 
 ```
 Usuário faz POST /api/consultas
@@ -202,7 +202,7 @@ Se o banco disser "não", a API repassa o erro — simples, seguro e rápido.
 
 ---
 
-## 📦 Pacotes NuGet
+## Pacotes NuGet
 
 | Pacote | Versão | Função |
 |--------|--------|--------|
