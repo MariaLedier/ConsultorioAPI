@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Consultório</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    font-size: 15px;
+    color: #222;
+  }
+
+  .tabs {
+    display: flex;
+    background: #2c5f8a;
+    padding: 0 16px;
+  }
+  .tab {
+    padding: 14px 20px;
+    color: rgba(255,255,255,.65);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+  }
+  .tab:hover { color: #fff; }
+  .tab.active { color: #fff; border-bottom-color: #fff; }
+
+  .page { display: none; padding: 24px; max-width: 860px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  h2 { font-size: 18px; margin-bottom: 16px; color: #2c5f8a; }
+  h3 { font-size: 15px; margin-bottom: 10px; color: #444; }
+
+  .form-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-row label { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; font-size: 13px; color: #555; }
+  .form-row input,
+  .form-row select { padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+  .form-row input:focus,
+  .form-row select:focus { outline: none; border-color: #2c5f8a; }
+
+  .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  .btn-blue  { background: #2c5f8a; color: #fff; }
+  .btn-blue:hover { background: #234d72; }
+  .btn-red   { background: #c0392b; color: #fff; font-size: 12px; padding: 5px 10px; }
+  .btn-red:hover { background: #a93226; }
+  .btn-gray  { background: #888; color: #fff; font-size: 12px; padding: 5px 10px; }
+  .btn-gray:hover { background: #666; }
+
+  .table-box { background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #2c5f8a; color: #fff; text-align: left; padding: 10px 12px; font-size: 13px; font-weight: normal; }
+  td { padding: 9px 12px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7f7f7; }
+
+  .status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .status-agendada  { background: #d4edda; color: #155724; }
+  .status-cancelada { background: #f8d7da; color: #721c24; }
+
+  #msg {
+    position: fixed; bottom: 20px; right: 20px;
+    padding: 12px 18px; border-radius: 5px; font-size: 14px;
+    color: #fff; display: none; z-index: 99;
+  }
+  #msg.ok  { background: #27ae60; }
+  #msg.err { background: #c0392b; }
+
+  .vazio { text-align: center; padding: 30px; color: #999; }
+
+  .filtro-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; flex-wrap: wrap; }
+  .filtro-row label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #555; }
+  .filtro-row input,
+  .filtro-row select { padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="ir('medicos',this)">Medicos</div>
+  <div class="tab" onclick="ir('pacientes',this)">Pacientes</div>
+  <div class="tab" onclick="ir('consultas',this)">Consultas</div>
+  <div class="tab" onclick="ir('agenda',this)">Agenda do Dia</div>
+</div>
+
+<!-- MEDICOS -->
+<div id="page-medicos" class="page active">
+  <h2>Medicos</h2>
+  <div class="form-box">
+    <h3 id="titulo-med">Cadastrar Medico</h3>
+    <input type="hidden" id="med-id" />
+    <div class="form-row">
+      <label>Nome <input id="med-nome" placeholder="Dr. Carlos Silva" /></label>
+      <label>CRM  <input id="med-crm"  placeholder="CRM-SP-12345" /></label>
+      <label>Especialidade <input id="med-esp" placeholder="Cardiologia" /></label>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-blue" onclick="salvarMedico()">Salvar</button>
+      <button class="btn btn-gray" onclick="limparMedico()">Limpar</button>
+    </div>
+  </div>
+  <div class="table-box">
+    <table>
+      <thead><tr><th>#</th><th>Nome</th><th>CRM</th><th>Especialidade</th><th>Acoes</th></tr></thead>
+      <tbody id="med-lista"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PACIENTES -->
+<div id="page-pacientes" class="page">
+  <h2>Pacientes</h2>
+  <div class="form-box">
+    <h3 id="titulo-pac">Cadastrar Paciente</h3>
+    <input type="hidden" id="pac-id" />
+    <div class="form-row">
+      <label>Nome     <input id="pac-nome" placeholder="Maria Oliveira" /></label>
+      <label>CPF      <input id="pac-cpf"  placeholder="111.222.333-44" /></label>
+      <label>Telefone <input id="pac-tel"  placeholder="(11) 99999-1111" /></label>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-blue" onclick="salvarPaciente()">Salvar</button>
+      <button class="btn btn-gray" onclick="limparPaciente()">Limpar</button>
+    </div>
+  </div>
+  <div class="table-box">
+    <table>
+      <thead><tr><th>#</th><th>Nome</th><th>CPF</th><th>Telefone</th><th>Acoes</th></tr></thead>
+      <tbody id="pac-lista"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CONSULTAS -->
+<div id="page-consultas" class="page">
+  <h2>Agendar Consulta</h2>
+  <div class="form-box">
+    <div class="form-row">
+      <label>Medico   <select id="ag-med"><option value="">Selecione...</option></select></label>
+      <label>Paciente <select id="ag-pac"><option value="">Selecione...</option></select></label>
+      <label>Data e Hora <input type="datetime-local" id="ag-dt" /></label>
+    </div>
+    <button class="btn btn-blue" onclick="agendar()">Agendar</button>
+  </div>
+  <h2>Consultas de Hoje</h2>
+  <div class="table-box">
+    <table>
+      <thead><tr><th>Horario</th><th>Medico</th><th>Paciente</th><th>Status</th><th>Acao</th></tr></thead>
+      <tbody id="cons-lista"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- AGENDA DO DIA -->
+<div id="page-agenda" class="page">
+  <h2>Agenda do Dia</h2>
+  <div class="filtro-row">
+    <label>Data   <input type="date" id="filt-data" /></label>
+    <label>Medico <select id="filt-med"><option value="">Todos</option></select></label>
+    <button class="btn btn-blue" onclick="buscarAgenda()">Buscar</button>
+  </div>
+  <div class="table-box">
+    <table>
+      <thead><tr><th>Horario</th><th>Medico</th><th>Paciente</th><th>Status</th><th>Acao</th></tr></thead>
+      <tbody id="agenda-lista"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="msg"></div>
+
+<script>
+const API = 'http://localhost:5000/api'
+let medicos = [], pacientes = []
+
+function ir(pagina, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  document.getElementById('page-' + pagina).classList.add('active')
+  el.classList.add('active')
+  if (pagina === 'medicos')   carregarMedicos()
+  if (pagina === 'pacientes') carregarPacientes()
+  if (pagina === 'consultas') abrirConsultas()
+  if (pagina === 'agenda')    abrirAgenda()
+}
+
+let timer
+function msg(texto, tipo) {
+  const el = document.getElementById('msg')
+  el.textContent = texto
+  el.className = tipo
+  el.style.display = 'block'
+  clearTimeout(timer)
+  timer = setTimeout(() => el.style.display = 'none', 3000)
+}
+
+async function req(metodo, rota, corpo) {
+  const op = { method: metodo, headers: { 'Content-Type': 'application/json' } }
+  if (corpo) op.body = JSON.stringify(corpo)
+  const r = await fetch(API + rota, op)
+  const d = await r.json().catch(() => ({}))
+  return { ok: r.ok, status: r.status, d }
+}
+
+function hora(dt) {
+  return new Date(dt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+// ── MEDICOS ─────────────────────────────────────────────────
+async function carregarMedicos() {
+  const r = await req('GET', '/medicos')
+  if (!r.ok) { msg('Erro ao carregar medicos', 'err'); return }
+  medicos = r.d
+  const tb = document.getElementById('med-lista')
+  if (!medicos.length) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Nenhum medico cadastrado</td></tr>'; return }
+  tb.innerHTML = medicos.map(m => `<tr>
+    <td>${m.idMedico}</td><td>${m.nome}</td><td>${m.crm}</td><td>${m.especialidade||'—'}</td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-gray" onclick="editarMedico(${m.idMedico})">Editar</button>
+      <button class="btn btn-red"  onclick="excluirMedico(${m.idMedico},'${m.nome.replace(/'/g,"\\'")}')">Excluir</button>
+    </td></tr>`).join('')
+}
+
+function limparMedico() {
+  ['med-id','med-nome','med-crm','med-esp'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('titulo-med').textContent = 'Cadastrar Medico'
+}
+
+function editarMedico(id) {
+  const m = medicos.find(x => x.idMedico === id)
+  if (!m) return
+  document.getElementById('med-id').value   = m.idMedico
+  document.getElementById('med-nome').value = m.nome
+  document.getElementById('med-crm').value  = m.crm
+  document.getElementById('med-esp').value  = m.especialidade||''
+  document.getElementById('titulo-med').textContent = 'Editar Medico'
+  window.scrollTo(0,0)
+}
+
+async function salvarMedico() {
+  const id = document.getElementById('med-id').value
+  const corpo = { nome: document.getElementById('med-nome').value.trim(), crm: document.getElementById('med-crm').value.trim(), especialidade: document.getElementById('med-esp').value.trim() }
+  if (!corpo.nome || !corpo.crm) { msg('Nome e CRM sao obrigatorios', 'err'); return }
+  const r = id ? await req('PUT',`/medicos/${id}`,corpo) : await req('POST','/medicos',corpo)
+  if (r.ok) { msg(id?'Medico atualizado!':'Medico cadastrado!','ok'); limparMedico(); carregarMedicos() }
+  else msg(r.d.message||'Erro ao salvar','err')
+}
+
+async function excluirMedico(id, nome) {
+  if (!confirm(`Excluir "${nome}"?`)) return
+  const r = await req('DELETE',`/medicos/${id}`)
+  r.ok ? (msg('Medico excluido','ok'), carregarMedicos()) : msg(r.d.message||'Erro','err')
+}
+
+// ── PACIENTES ────────────────────────────────────────────────
+async function carregarPacientes() {
+  const r = await req('GET', '/pacientes')
+  if (!r.ok) { msg('Erro ao carregar pacientes', 'err'); return }
+  pacientes = r.d
+  const tb = document.getElementById('pac-lista')
+  if (!pacientes.length) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Nenhum paciente cadastrado</td></tr>'; return }
+  tb.innerHTML = pacientes.map(p => `<tr>
+    <td>${p.idPaciente}</td><td>${p.nome}</td><td>${p.cpf}</td><td>${p.telefone||'—'}</td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-gray" onclick="editarPaciente(${p.idPaciente})">Editar</button>
+      <button class="btn btn-red"  onclick="excluirPaciente(${p.idPaciente},'${p.nome.replace(/'/g,"\\'")}')">Excluir</button>
+    </td></tr>`).join('')
+}
+
+function limparPaciente() {
+  ['pac-id','pac-nome','pac-cpf','pac-tel'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('titulo-pac').textContent = 'Cadastrar Paciente'
+}
+
+function editarPaciente(id) {
+  const p = pacientes.find(x => x.idPaciente === id)
+  if (!p) return
+  document.getElementById('pac-id').value   = p.idPaciente
+  document.getElementById('pac-nome').value = p.nome
+  document.getElementById('pac-cpf').value  = p.cpf
+  document.getElementById('pac-tel').value  = p.telefone||''
+  document.getElementById('titulo-pac').textContent = 'Editar Paciente'
+  window.scrollTo(0,0)
+}
+
+async function salvarPaciente() {
+  const id = document.getElementById('pac-id').value
+  const corpo = { nome: document.getElementById('pac-nome').value.trim(), cpf: document.getElementById('pac-cpf').value.trim(), telefone: document.getElementById('pac-tel').value.trim() }
+  if (!corpo.nome || !corpo.cpf) { msg('Nome e CPF sao obrigatorios', 'err'); return }
+  const r = id ? await req('PUT',`/pacientes/${id}`,corpo) : await req('POST','/pacientes',corpo)
+  if (r.ok) { msg(id?'Paciente atualizado!':'Paciente cadastrado!','ok'); limparPaciente(); carregarPacientes() }
+  else msg(r.d.message||'Erro ao salvar','err')
+}
+
+async function excluirPaciente(id, nome) {
+  if (!confirm(`Excluir "${nome}"?`)) return
+  const r = await req('DELETE',`/pacientes/${id}`)
+  r.ok ? (msg('Paciente excluido','ok'), carregarPacientes()) : msg(r.d.message||'Erro','err')
+}
+
+// ── CONSULTAS ────────────────────────────────────────────────
+async function abrirConsultas() {
+  if (!medicos.length)   { const r = await req('GET','/medicos');   if(r.ok) medicos   = r.d }
+  if (!pacientes.length) { const r = await req('GET','/pacientes'); if(r.ok) pacientes = r.d }
+  document.getElementById('ag-med').innerHTML = '<option value="">Selecione...</option>' + medicos.map(m => `<option value="${m.idMedico}">${m.nome}</option>`).join('')
+  document.getElementById('ag-pac').innerHTML = '<option value="">Selecione...</option>' + pacientes.map(p => `<option value="${p.idPaciente}">${p.nome}</option>`).join('')
+  const dt = new Date(); dt.setHours(dt.getHours()+1,0,0,0)
+  document.getElementById('ag-dt').value = dt.toISOString().slice(0,16)
+  carregarConsultasHoje()
+}
+
+async function carregarConsultasHoje() {
+  const hoje = new Date().toISOString().split('T')[0]
+  const r = await req('GET', `/consultas/diaria?data=${hoje}`)
+  const tb = document.getElementById('cons-lista')
+  if (!r.ok) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Erro ao carregar</td></tr>'; return }
+  const lista = r.d
+  if (!lista.length) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Nenhuma consulta hoje</td></tr>'; return }
+  tb.innerHTML = lista.map(c => `<tr>
+    <td>${hora(c.dataHora)}</td><td>${c.nomeMedico||'—'}</td><td>${c.nomePaciente||'—'}</td>
+    <td><span class="status status-${c.status.toLowerCase()}">${c.status}</span></td>
+    <td>${c.status==='Agendada'?`<button class="btn btn-red" onclick="cancelar(${c.idConsulta},'cons')">Cancelar</button>`:'—'}</td>
+  </tr>`).join('')
+}
+
+async function agendar() {
+  const idMed = document.getElementById('ag-med').value
+  const idPac = document.getElementById('ag-pac').value
+  const dt    = document.getElementById('ag-dt').value
+  if (!idMed||!idPac||!dt) { msg('Preencha todos os campos','err'); return }
+  const r = await req('POST','/consultas',{ idMedico:parseInt(idMed), idPaciente:parseInt(idPac), dataHora:new Date(dt).toISOString() })
+  if (r.ok) { msg('Consulta agendada!','ok'); carregarConsultasHoje() }
+  else msg(r.d.message||'Erro ao agendar','err')
+}
+
+// ── AGENDA DO DIA ────────────────────────────────────────────
+async function abrirAgenda() {
+  if (!medicos.length) { const r = await req('GET','/medicos'); if(r.ok) medicos = r.d }
+  document.getElementById('filt-data').value = new Date().toISOString().split('T')[0]
+  document.getElementById('filt-med').innerHTML = '<option value="">Todos</option>' + medicos.map(m => `<option value="${m.idMedico}">${m.nome}</option>`).join('')
+  buscarAgenda()
+}
+
+async function buscarAgenda() {
+  const data = document.getElementById('filt-data').value
+  const med  = document.getElementById('filt-med').value
+  if (!data) { msg('Selecione uma data','err'); return }
+  let rota = `/consultas/diaria?data=${data}`
+  if (med) rota += `&idMedico=${med}`
+  const r = await req('GET', rota)
+  const tb = document.getElementById('agenda-lista')
+  if (!r.ok) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Erro ao buscar</td></tr>'; return }
+  const lista = r.d
+  if (!lista.length) { tb.innerHTML = '<tr><td colspan="5" class="vazio">Nenhuma consulta nesta data</td></tr>'; return }
+  tb.innerHTML = lista.map(c => `<tr>
+    <td>${hora(c.dataHora)}</td><td>${c.nomeMedico||'—'}</td><td>${c.nomePaciente||'—'}</td>
+    <td><span class="status status-${c.status.toLowerCase()}">${c.status}</span></td>
+    <td>${c.status==='Agendada'?`<button class="btn btn-red" onclick="cancelar(${c.idConsulta},'agenda')">Cancelar</button>`:'—'}</td>
+  </tr>`).join('')
+}
+
+async function cancelar(id, origem) {
+  if (!confirm('Cancelar esta consulta?')) return
+  const r = await req('PUT',`/consultas/${id}/cancelar`)
+  if (r.ok) { msg('Consulta cancelada','ok'); origem==='agenda'?buscarAgenda():carregarConsultasHoje() }
+  else msg(r.d.message||'Erro ao cancelar','err')
+}
+
+carregarMedicos()
+</script>
+</body>
+</html>
